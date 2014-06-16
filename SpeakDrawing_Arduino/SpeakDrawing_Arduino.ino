@@ -8,7 +8,7 @@
  ************************************************************************************************************************************/
  
 // ShiftPWM uses timer1 by default. To use a different timer, before '#include <ShiftPWM.h>', add
-// #define SHIFTPWM_USE_TIMER2  // for Arduino Uno and earlier (Atmega328)
+ #define SHIFTPWM_USE_TIMER2  // for Arduino Uno and earlier (Atmega328)
 // #define SHIFTPWM_USE_TIMER3  // for Arduino Micro/Leonardo (Atmega32u4)
 
 // Clock and data pins are pins from the hardware SPI, you cannot choose them yourself if you use the hardware SPI.
@@ -16,7 +16,7 @@
 // Clock pin is SCK (Uno and earlier: 13, Leonardo: ICSP 3, Mega: 52, Teensy 2.0: 1, Teensy 2.0++: 21)
 
 // You can choose the latch pin yourself.
-const int ShiftPWM_latchPin=8;
+const int ShiftPWM_latchPin = 7;
 
 // ** uncomment this part to NOT use the SPI port and change the pin numbers. This is 2.5x slower **
 // #define SHIFTPWM_NOSPI
@@ -41,28 +41,44 @@ const bool ShiftPWM_balanceLoad = false;
 
 unsigned char maxBrightness = 255;
 unsigned char pwmFrequency = 75;
-int numRegisters = 1;
-int numRGBleds = numRegisters * 8 / 3;
+int numRegisters = 5;
+int numRGBleds = numRegisters * 8 / 3; // Max number: numRegisters * 8 / 3
+
+#include "LedEffectDefine.h"
 
 /*
+ BLE
+ */
 
-Copyright (c) 2012, 2013 RedBearLab
+#include <AltSoftSerial.h>
+// UNO RX: PIN8, TXPIN9
+AltSoftSerial BLE;
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+/*
+ functions
+ */
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+byte readBLE()
+{
+  delay(10);
+  byte data = BLE.read();
+  Serial.println(data);
+  return data;
+}
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-*/
-
-#include <ble_mini.h>
-
-
-// Turn all LED's off
-void turnLEDsAllOff()
+void turnAllLEDsOff()
 {
   ShiftPWM.SetAll(0);
+}
+
+void changeSingleLedColor()
+{
+  byte led = readBLE();
+  byte r = readBLE();
+  byte g = readBLE();
+  byte b = readBLE();
+  
+  ShiftPWM.SetRGB(led, r, g, b);
 }
 
 void setup()
@@ -77,19 +93,18 @@ void setup()
   
   ShiftPWM.Start(pwmFrequency, maxBrightness);
   
-  turnLEDsAllOff();
-  
   // access data by ble
-  BLEMini_begin(57600);
+  BLE.begin(57600);
+  Serial.begin(57600);
 }
 
 void loop()
 {
-  while(BLEMini_available()) {
-    byte data = BLEMini_read();
-    
-    if (data == 0x00) {
-      ShiftPWM.OneByOneFast();
+  if (BLE.available()) {
+    byte data = readBLE();
+    if (data == kChangeSingleLed) {
+      changeSingleLedColor();
     }
   }
+  delay(20);
 }
