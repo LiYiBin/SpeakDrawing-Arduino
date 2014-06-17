@@ -16,7 +16,7 @@
 // Clock pin is SCK (Uno and earlier: 13, Leonardo: ICSP 3, Mega: 52, Teensy 2.0: 1, Teensy 2.0++: 21)
 
 // You can choose the latch pin yourself.
-const int ShiftPWM_latchPin = 7;
+const int ShiftPWM_latchPin = 7 ;
 
 // ** uncomment this part to NOT use the SPI port and change the pin numbers. This is 2.5x slower **
 // #define SHIFTPWM_NOSPI
@@ -96,6 +96,8 @@ void setup()
   // access data by ble
   BLE.begin(57600);
   Serial.begin(57600);
+  
+  turnAllLEDsOff();
 }
 
 void loop()
