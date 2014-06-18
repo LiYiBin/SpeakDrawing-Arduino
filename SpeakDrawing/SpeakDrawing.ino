@@ -58,6 +58,9 @@ AltSoftSerial BLE;
  functions
  */
 
+int currentLed = 0;
+int currentColor[11][3] = {{0}};
+
 byte readBLE()
 {
   delay(10);
@@ -69,6 +72,35 @@ byte readBLE()
 void turnAllLEDsOff()
 {
   ShiftPWM.SetAll(0);
+}
+
+void changeAllLeds(int rgb[3])
+{
+  for (int i = 0; i < 11; i++) {
+    currentColor[i][0] = rgb[0];
+    currentColor[i][1] = rgb[1];
+    currentColor[i][2] = rgb[2];
+    ShiftPWM.SetRGB(i, rgb[0], rgb[1], rgb[2]);
+  }
+}
+
+void pushOneLed(int *rgb)
+{
+  if (currentLed < maxLedNumber) {
+    currentColor[currentLed][0] = rgb[0];
+    currentColor[currentLed][1] = rgb[1];
+    currentColor[currentLed][2] = rgb[2];
+    ShiftPWM.SetRGB(LedList[currentLed], rgb[0], rgb[1], rgb[2]);
+    currentLed++;
+  } else {
+    for (int i = maxLedNumber - 2; i >= 0; i--) {
+      currentColor[i+1][0] = currentColor[i][0];
+      currentColor[i+1][1] = currentColor[i][1];
+      currentColor[i+1][2] = currentColor[i][2];
+      ShiftPWM.SetRGB(LedList[i+1], currentColor[i+1][0], currentColor[i+1][1], currentColor[i+1][2]);
+    }
+    ShiftPWM.SetRGB(LedList[0], rgb[0], rgb[1], rgb[2]);
+  }
 }
 
 void setup()
@@ -95,20 +127,32 @@ void loop()
   if (BLE.available()) {
     byte data = readBLE();
     if (data == kInit) {
+      currentLed = 0;
       turnAllLEDsOff();
-    } else if (data == kHappy) {
-
-    } else if (data == kAngry) {
-
-    } else if (data == kHelpless) {
-
-    } else if (data == kWorried) {
-
-    } else if (data == kNervous) {
-
-    } else if (data == kExcited) {
-      
+    } else if (data == kAllHappy) {
+      changeAllLeds(HappyColor);
+    } else if (data == kAllAngry) {
+      changeAllLeds(AngryColor);
+    } else if (data == kAllHelpless) {
+      changeAllLeds(HelplessColor);
+    } else if (data == kAllWorried) {
+      changeAllLeds(WorriedColor);
+    } else if (data == kAllNervous) {
+      changeAllLeds(NervousColor);
+    } else if (data == kAllExcited) {
+      changeAllLeds(ExcitedColor);
+    } else if (data == kAddHappy) {
+      pushOneLed(HappyColor);
+    } else if (data == kAddAngry) {
+      pushOneLed(AngryColor);
+    } else if (data == kAddHelpless) {
+      pushOneLed(HelplessColor);
+    } else if (data == kAddWorried) {
+      pushOneLed(WorriedColor);
+    } else if (data == kAddNervous) {
+      pushOneLed(NervousColor);
+    } else if (data == kAddExcited) {
+      pushOneLed(ExcitedColor);
     }
   }
-  delay(20);
 }
