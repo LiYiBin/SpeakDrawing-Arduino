@@ -104,7 +104,13 @@ void loop()
 {
   if (BLE.available()) {
     byte data = readBLE();
-    if (data == kChangeSingleLed) {
+    if (data == kInit) {
+      readBLE();
+      readBLE();
+      readBLE();
+      readBLE();
+      turnAllLEDsOff();
+    } else if (data == kChangeSingleLed) {
       changeSingleLedColor();
     }
   }
